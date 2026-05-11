@@ -347,12 +347,14 @@ export default function HomePage() {
     }
     setIsSubmittingLead(true);
     
+    const carTitle = `${selectedCar?.year || ''} ${selectedCar?.brand || ''} ${selectedCar?.model || ''}`.trim();
+
     const { error } = await supabase.from('leads').insert([{
       name: leadForm.name || 'Cliente Anónimo',
       email: leadForm.email,
       phone: leadForm.phone,
       message: leadForm.message,
-      car_title: `${selectedCar?.year || ''} ${selectedCar?.brand || ''} ${selectedCar?.model || ''}`.trim(),
+      car_title: carTitle,
       status: 'Nuevo'
     }]);
 
@@ -361,6 +363,21 @@ export default function HomePage() {
     if (error) {
       alert(t.alertError);
     } else {
+      // --- CONEXIÓN A SLACK (INTEGRACIÓN NUEVA) ---
+      try {
+        await fetch('https://hooks.slack.com/services/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', {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: JSON.stringify({
+            text: `🚀 *¡NUEVO LEAD DE VEHÍCULO!* 🚀\n\n*Vehículo:* ${carTitle}\n*Cliente:* ${leadForm.name || 'Anónimo'}\n*Email:* ${leadForm.email || 'N/A'}\n*Teléfono:* ${leadForm.phone || 'N/A'}\n*Mensaje:* ${leadForm.message || 'Sin mensaje adicional.'}`
+          })
+        });
+      } catch (err) {
+        console.error('Error enviando notificación a Slack', err);
+      }
+      // --- FIN CONEXIÓN SLACK ---
+
       alert(t.alertSuccess);
       setLeadForm({ name: '', email: '', phone: '', message: '' });
       setShowLeadForm(false);
@@ -383,12 +400,29 @@ export default function HomePage() {
     setChatInput('');
 
     // Enviar a la base de datos (Tabla Leads)
-    await supabase.from('leads').insert([{
+    const { error } = await supabase.from('leads').insert([{
       name: 'Chat Web',
       message: userText,
       car_title: 'Mensaje desde Chat',
       status: 'Nuevo'
     }]);
+
+    if (!error) {
+      // --- CONEXIÓN A SLACK (INTEGRACIÓN NUEVA CHAT) ---
+      try {
+        await fetch('https://hooks.slack.com/services/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', {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: JSON.stringify({
+            text: `💬 *¡NUEVO MENSAJE EN EL CHAT DE LA WEB!* 💬\n\n*Mensaje:* ${userText}`
+          })
+        });
+      } catch (err) {
+        console.error('Error enviando notificación a Slack', err);
+      }
+      // --- FIN CONEXIÓN SLACK ---
+    }
 
     // Simular respuesta automática del bot después de 1 segundo
     setTimeout(() => {
