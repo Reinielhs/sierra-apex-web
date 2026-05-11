@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Sierra Apex Group | Elevating the Standard",
   description: "Redefiniendo la adquisición de vehículos pre-owned y de alto rendimiento en el sur de Florida.",
+  icons: {
+    icon: '/icon.png', // Obliga al sistema a usar esta imagen
+  },
 };
 
 export default function RootLayout({
