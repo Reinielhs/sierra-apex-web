@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Email or phone required' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('leads').insert([{
+  const { error } = await supabase.from('Leads').insert([{
     name: String(name || 'Cliente Anónimo').slice(0, 200),
     email: email ? String(email).slice(0, 200) : null,
     phone: phone ? String(phone).slice(0, 50) : null,
