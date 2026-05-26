@@ -709,7 +709,7 @@ export default function HomePage() {
         <div className="px-1">
           <div className="flex justify-between items-center mb-1">
             <h4 className="text-lg font-bold tracking-tight text-white uppercase group-hover:text-sierra-gold transition-colors">{car?.brand || 'Sin Marca'}</h4>
-            <p className="text-lg font-light text-sierra-gold tracking-tighter">${(car?.price || 0).toLocaleString()}</p>
+            {!isSold && <p className="text-lg font-light text-sierra-gold tracking-tighter">${(car?.price || 0).toLocaleString()}</p>}
           </div>
           <p className="text-sm font-light text-white/80 mb-3">{car?.model || ''} {car?.trim || ''}</p>
           <div className="flex justify-between items-center text-xs text-white/70 uppercase tracking-[0.2em] border-t border-white/10 pt-3">
@@ -1372,7 +1372,7 @@ export default function HomePage() {
                   <h3 className="text-3xl md:text-4xl font-bold tracking-tighter text-white mb-6 md:mb-8 uppercase leading-none">{selectedCar?.model || ''} {selectedCar?.trim || ''}</h3>
                   
                   <div className="flex justify-between items-end mb-6 md:mb-8">
-                    <div><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.price}</span><span className="text-3xl md:text-4xl font-bold text-sierra-gold">${(selectedCar?.price || 0).toLocaleString()}</span></div>
+                    {selectedCar?.status !== 'Vendido' && <div><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.price}</span><span className="text-3xl md:text-4xl font-bold text-sierra-gold">${(selectedCar?.price || 0).toLocaleString()}</span></div>}
                     <div className="text-right"><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.mileage}</span><span className="text-xl md:text-2xl text-white/90 font-light">{selectedCar?.miles || 0} mi</span></div>
                   </div>
 
