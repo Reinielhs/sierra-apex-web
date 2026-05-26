@@ -321,21 +321,36 @@ export default function HomePage() {
     }
   };
 
+  const getAuthHeader = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session ? { 'Authorization': `Bearer ${session.access_token}` } : {} as Record<string, string>;
+  };
+
   const updateTestimonialStatus = async (id: number, newStatus: string) => {
-    await supabase.from('testimonials').update({ status: newStatus }).eq('id', id);
-    fetchAdminTestimonials(); 
-    fetchPublicTestimonials(); 
+    const authHeader = await getAuthHeader();
+    await fetch('/api/admin/testimonials', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id, status: newStatus }),
+    });
+    fetchAdminTestimonials();
+    fetchPublicTestimonials();
   };
 
   const handleDeleteTestimonial = async (id: number) => {
     if (!window.confirm(lang === 'es' ? "¿Seguro que deseas eliminar esta opinión?" : "Are you sure you want to delete this review?")) return;
-    
-    const { error } = await supabase.from('testimonials').delete().eq('id', id);
-    if (!error) {
+
+    const authHeader = await getAuthHeader();
+    const res = await fetch('/api/admin/testimonials', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
       fetchAdminTestimonials();
       fetchPublicTestimonials();
     } else {
-      alert("Error al eliminar: " + error.message);
+      alert("Error al eliminar.");
     }
   };
 
@@ -367,8 +382,13 @@ export default function HomePage() {
   };
 
   const updateLeadStatus = async (id: number, newStatus: string) => {
-    await supabase.from('leads').update({ status: newStatus }).eq('id', id);
-    fetchLeads(); 
+    const authHeader = await getAuthHeader();
+    await fetch('/api/admin/leads', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id, status: newStatus }),
+    });
+    fetchLeads();
   };
 
   // --- FUNCIÓN PARA ENVIAR MENSAJE DESDE EL CHAT ---
@@ -392,9 +412,14 @@ export default function HomePage() {
 
   const handleToggleSold = async (id: number, currentStatus: string) => {
     const newStatus = currentStatus === 'Vendido' ? 'Disponible' : 'Vendido';
-    const { error } = await supabase.from('inventory').update({ status: newStatus }).eq('id', id);
-    if (error) {
-      alert("Error al actualizar el estado: " + error.message);
+    const authHeader = await getAuthHeader();
+    const res = await fetch('/api/admin/inventory', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id, status: newStatus }),
+    });
+    if (!res.ok) {
+      alert("Error al actualizar el estado.");
     } else {
       fetchInventory();
     }
@@ -594,23 +619,30 @@ export default function HomePage() {
     };
     if (dbPayload.image === undefined) delete dbPayload.image;
 
-    let error;
-    if (editingVehicleId) {
-      const { error: updateError } = await supabase.from('inventory').update(dbPayload).eq('id', editingVehicleId);
-      error = updateError;
-    } else {
-      const { error: insertError } = await supabase.from('inventory').insert([{...dbPayload, stock: `SA-${Math.floor(1000 + Math.random() * 9000)}`, leads: 0, days_on_market: 0}]);
-      error = insertError;
-    }
+    const authHeader = await getAuthHeader();
+    const res = await fetch('/api/admin/inventory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({
+        id: editingVehicleId || undefined,
+        payload: dbPayload,
+        stock: editingVehicleId ? undefined : `SA-${Math.floor(1000 + Math.random() * 9000)}`,
+      }),
+    });
 
-    if (error) alert("Hubo un error al guardar en la nube.");
+    if (!res.ok) alert("Hubo un error al guardar en la nube.");
     else { alert('Vehículo guardado con éxito.'); fetchInventory(); resetForm(); }
   };
 
   const handleDeleteVehicle = async (id: number) => {
     if (!window.confirm("¿Seguro que deseas eliminar este vehículo?")) return;
-    const { error } = await supabase.from('inventory').delete().eq('id', id);
-    if (!error) fetchInventory();
+    const authHeader = await getAuthHeader();
+    const res = await fetch('/api/admin/inventory', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) fetchInventory();
   };
 
   const handleEditClick = (car: any) => {
