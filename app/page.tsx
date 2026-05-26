@@ -303,17 +303,16 @@ export default function HomePage() {
       return;
     }
     setIsSubmittingReview(true);
-    
-    const { error } = await supabase.from('testimonials').insert([{
-      name: reviewForm.name.trim() || 'Cliente Anónimo',
-      rating: reviewForm.rating,
-      comment: reviewForm.comment.trim(),
-      status: 'Pendiente'
-    }]);
+
+    const res = await fetch('/api/testimonials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: reviewForm.name.trim(), rating: reviewForm.rating, comment: reviewForm.comment.trim() }),
+    });
 
     setIsSubmittingReview(false);
 
-    if (error) {
+    if (!res.ok) {
       alert(t.alertError);
     } else {
       alert(lang === 'es' ? "¡Gracias! Tu opinión ha sido enviada y está en revisión." : "Thank you! Your review has been submitted and is under review.");
@@ -346,42 +345,24 @@ export default function HomePage() {
       return;
     }
     setIsSubmittingLead(true);
-    
+
     const carTitle = `${selectedCar?.year || ''} ${selectedCar?.brand || ''} ${selectedCar?.model || ''}`.trim();
 
-    const { error } = await supabase.from('leads').insert([{
-      name: leadForm.name || 'Cliente Anónimo',
-      email: leadForm.email,
-      phone: leadForm.phone,
-      message: leadForm.message,
-      car_title: carTitle,
-      status: 'Nuevo'
-    }]);
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: leadForm.name, email: leadForm.email, phone: leadForm.phone, message: leadForm.message, car_title: carTitle }),
+    });
 
     setIsSubmittingLead(false);
 
-    if (error) {
+    if (!res.ok) {
       alert(t.alertError);
     } else {
-      // --- CONEXIÓN A SLACK (INTEGRACIÓN NUEVA) ---
-      try {
-        await fetch('https://hooks.slack.com/services/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', {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: JSON.stringify({
-            text: `🚀 *¡NUEVO LEAD DE VEHÍCULO!* 🚀\n\n*Vehículo:* ${carTitle}\n*Cliente:* ${leadForm.name || 'Anónimo'}\n*Email:* ${leadForm.email || 'N/A'}\n*Teléfono:* ${leadForm.phone || 'N/A'}\n*Mensaje:* ${leadForm.message || 'Sin mensaje adicional.'}`
-          })
-        });
-      } catch (err) {
-        console.error('Error enviando notificación a Slack', err);
-      }
-      // --- FIN CONEXIÓN SLACK ---
-
       alert(t.alertSuccess);
       setLeadForm({ name: '', email: '', phone: '', message: '' });
       setShowLeadForm(false);
-      fetchLeads(); 
+      fetchLeads();
     }
   };
 
@@ -394,37 +375,16 @@ export default function HomePage() {
   const handleSendChatMessage = async () => {
     if (!chatInput.trim()) return;
     const userText = chatInput.trim();
-    
-    // Agregar el mensaje del usuario a la ventana de chat visual
+
     setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
     setChatInput('');
 
-    // Enviar a la base de datos (Tabla Leads)
-    const { error } = await supabase.from('leads').insert([{
-      name: 'Chat Web',
-      message: userText,
-      car_title: 'Mensaje desde Chat',
-      status: 'Nuevo'
-    }]);
+    await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Chat Web', message: userText, car_title: 'Mensaje desde Chat', type: 'chat' }),
+    });
 
-    if (!error) {
-      // --- CONEXIÓN A SLACK (INTEGRACIÓN NUEVA CHAT) ---
-      try {
-        await fetch('https://hooks.slack.com/services/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', {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: JSON.stringify({
-            text: `💬 *¡NUEVO MENSAJE EN EL CHAT DE LA WEB!* 💬\n\n*Mensaje:* ${userText}`
-          })
-        });
-      } catch (err) {
-        console.error('Error enviando notificación a Slack', err);
-      }
-      // --- FIN CONEXIÓN SLACK ---
-    }
-
-    // Simular respuesta automática del bot después de 1 segundo
     setTimeout(() => {
       setChatMessages(prev => [...prev, { role: 'bot', text: '✅ Mensaje recibido. Nuestro equipo lo revisará y se pondrá en contacto contigo pronto.' }]);
     }, 1000);
