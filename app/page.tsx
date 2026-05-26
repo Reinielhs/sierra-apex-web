@@ -284,7 +284,7 @@ export default function HomePage() {
   const [isSubmittingLead, setIsSubmittingLead] = useState(false);
 
   const fetchLeads = useCallback(async () => {
-    const { data, error } = await supabase.from('Leads').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
     if (!error) setLeads(data || []); 
     else setLeads([]);
   }, []);
@@ -367,7 +367,7 @@ export default function HomePage() {
   };
 
   const updateLeadStatus = async (id: number, newStatus: string) => {
-    await supabase.from('Leads').update({ status: newStatus }).eq('id', id);
+    await supabase.from('leads').update({ status: newStatus }).eq('id', id);
     fetchLeads(); 
   };
 
