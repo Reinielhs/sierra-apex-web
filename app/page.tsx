@@ -1385,7 +1385,7 @@ export default function HomePage() {
                     <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.intColor}</span><span className="text-white">{selectedCar?.interior_color || 'N/A'}</span></div>
                   </div>
 
-                  <div className="mb-8 md:mb-10"><p className="text-sm md:text-base font-light text-white/60 leading-relaxed italic">"{selectedCar?.description || t.descriptionQuote}"</p></div>
+                  <div className="mb-8 md:mb-10"><p className="text-sm md:text-base text-white leading-relaxed">"{selectedCar?.description || t.descriptionQuote}"</p></div>
                   
                   {selectedCar?.status === 'Vendido' ? (
                     <button disabled className="w-full py-4 md:py-5 bg-black/50 border border-red-500/50 text-red-500/80 font-bold rounded-xl uppercase tracking-widest text-[10px] md:text-sm cursor-not-allowed">{t.vehicleSoldBtn}</button>
