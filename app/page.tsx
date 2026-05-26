@@ -1377,7 +1377,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-2 md:gap-x-4 text-sm md:text-base text-white/80 mb-6 md:mb-10 border-t border-b border-white/10 py-6 md:py-8">
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">VIN</span><span className="break-all">{selectedCar?.vin || 'N/A'}</span></div>
+                    <div className="col-span-2"><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">VIN</span><span className="whitespace-nowrap tracking-widest font-mono text-xs md:text-sm">{selectedCar?.vin || 'N/A'}</span></div>
                     <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">Trim</span>{selectedCar?.trim || 'N/A'}</div>
                     <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.engine}</span>{selectedCar?.engine || 'N/A'}</div>
                     <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.transmission}</span>{selectedCar?.transmission || 'N/A'}</div>
