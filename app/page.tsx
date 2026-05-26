@@ -1376,13 +1376,13 @@ export default function HomePage() {
                     <div className="text-right"><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.mileage}</span><span className="text-xl md:text-2xl text-white/90 font-light">{selectedCar?.miles || 0} mi</span></div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-2 md:gap-x-4 text-sm md:text-base text-white/80 mb-6 md:mb-10 border-t border-b border-white/10 py-6 md:py-8">
-                    <div className="col-span-2 overflow-x-auto"><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">VIN</span><span className="whitespace-nowrap font-mono text-xs tracking-normal">{selectedCar?.vin || 'N/A'}</span></div>
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">Trim</span>{selectedCar?.trim || 'N/A'}</div>
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.engine}</span>{selectedCar?.engine || 'N/A'}</div>
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.transmission}</span>{selectedCar?.transmission || 'N/A'}</div>
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.extColor}</span>{selectedCar?.color || 'N/A'}</div>
-                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.intColor}</span>{selectedCar?.interior_color || 'N/A'}</div>
+                  <div className="grid grid-cols-2 gap-y-4 md:gap-y-6 gap-x-2 md:gap-x-4 text-sm md:text-base mb-6 md:mb-10 border-t border-b border-white/10 py-6 md:py-8">
+                    <div className="col-span-2 overflow-x-auto"><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">VIN</span><span className="whitespace-nowrap font-mono text-sm md:text-base text-white">{selectedCar?.vin || 'N/A'}</span></div>
+                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">Trim</span><span className="text-white">{selectedCar?.trim || 'N/A'}</span></div>
+                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.engine}</span><span className="text-white">{selectedCar?.engine || 'N/A'}</span></div>
+                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.transmission}</span><span className="text-white">{selectedCar?.transmission || 'N/A'}</span></div>
+                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.extColor}</span><span className="text-white">{selectedCar?.color || 'N/A'}</span></div>
+                    <div><span className="text-white/50 text-[10px] md:text-xs uppercase font-bold tracking-widest block mb-1">{t.intColor}</span><span className="text-white">{selectedCar?.interior_color || 'N/A'}</span></div>
                   </div>
 
                   <div className="mb-8 md:mb-10"><p className="text-sm md:text-base font-light text-white/60 leading-relaxed italic">"{selectedCar?.description || t.descriptionQuote}"</p></div>
