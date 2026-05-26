@@ -1368,8 +1368,8 @@ export default function HomePage() {
             <div className="w-full md:w-2/5 p-6 md:p-10 flex flex-col justify-start md:justify-center bg-[#162439] h-auto md:overflow-y-auto flex-1 pb-24 md:pb-10">
               {!showLeadForm ? (
                 <div className="animate-in fade-in slide-in-from-right-4 mt-2 md:mt-0">
-                  <h2 className="text-3xl md:text-5xl font-bold tracking-tighter text-white mb-1 md:mb-2 uppercase leading-none">{selectedCar?.year || ''} {selectedCar?.brand || ''}</h2>
-                  <h3 className="text-lg md:text-2xl font-light text-white/60 mb-6 md:mb-8 uppercase tracking-widest">{selectedCar?.model || ''} {selectedCar?.trim || ''}</h3>
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-white mb-1 md:mb-2 uppercase leading-none">{selectedCar?.year || ''} {selectedCar?.brand || ''}</h2>
+                  <h3 className="text-3xl md:text-4xl font-bold tracking-tighter text-white mb-6 md:mb-8 uppercase leading-none">{selectedCar?.model || ''} {selectedCar?.trim || ''}</h3>
                   
                   <div className="flex justify-between items-end mb-6 md:mb-8">
                     <div><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.price}</span><span className="text-3xl md:text-4xl font-bold text-sierra-gold">${(selectedCar?.price || 0).toLocaleString()}</span></div>
