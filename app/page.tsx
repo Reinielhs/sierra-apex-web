@@ -711,8 +711,8 @@ export default function HomePage() {
             <h4 className="text-lg font-bold tracking-tight text-white uppercase group-hover:text-sierra-gold transition-colors">{car?.brand || 'Sin Marca'}</h4>
             <p className="text-lg font-light text-sierra-gold tracking-tighter">${(car?.price || 0).toLocaleString()}</p>
           </div>
-          <p className="text-sm font-light text-white/50 mb-3">{car?.model || ''} {car?.trim || ''}</p>
-          <div className="flex justify-between items-center text-xs text-white/40 uppercase tracking-[0.2em] border-t border-white/5 pt-3">
+          <p className="text-sm font-light text-white/80 mb-3">{car?.model || ''} {car?.trim || ''}</p>
+          <div className="flex justify-between items-center text-xs text-white/70 uppercase tracking-[0.2em] border-t border-white/10 pt-3">
             <span>{car?.miles || 0} MI</span>
             <span className="text-sierra-gold/70 group-hover:text-sierra-gold group-hover:translate-x-1 transition-all duration-300 italic">{t.exploreBtn}</span>
           </div>
