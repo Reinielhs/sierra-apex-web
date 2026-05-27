@@ -541,6 +541,7 @@ export default function HomePage() {
 
     setNlResults(results);
     setSearchActive(false);
+    scrollToSection('inventario');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1242,7 +1243,8 @@ export default function HomePage() {
                   {nlResults.map((car: any) => renderCarCard(car, false))}
                 </div>
               ) : (
-                <div className="p-10 md:p-20 text-center bg-[#162439] border border-white/5 rounded-2xl shadow-lg">
+                <div className="p-10 md:p-20 text-center bg-[#162439] border border-white/10 rounded-2xl shadow-lg">
+                  <p className="text-white font-bold uppercase tracking-widest text-sm mb-3">{t.noMatchesTitle}</p>
                   <p className="text-white/60 text-sm md:text-base">{t.nlNoResults}</p>
                 </div>
               )}
