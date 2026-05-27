@@ -77,6 +77,14 @@ const translations = {
     chatWelcome2: "Remember to leave your contact information (email or phone) if you'd like one of our sales team to reach out to you.",
     chatReply: "✅ Message received. Our team will review it and get in touch with you soon.",
     chatPlaceholder: "Type your message...",
+    chatWhatsApp: "Contact via WhatsApp",
+    waText: "Hello, I'm interested in the",
+    // Natural language search
+    nlLabel: "Smart Search",
+    nlPlaceholder: "E.g.: white BMW automatic under $30,000 or SUV under 50,000 miles...",
+    nlBtn: "Search",
+    nlClear: "Clear search",
+    nlNoResults: "No vehicles matched your search. Try different keywords.",
   },
   es: {
     navInventory: "Inventario",
@@ -145,6 +153,14 @@ const translations = {
     chatWelcome2: "Recuerda dejar tu información de contacto (correo o teléfono) si quieres que uno de nuestros vendedores se ponga en contacto contigo.",
     chatReply: "✅ Mensaje recibido. Nuestro equipo lo revisará y se pondrá en contacto contigo pronto.",
     chatPlaceholder: "Escribe tu mensaje...",
+    chatWhatsApp: "Contactar por WhatsApp",
+    waText: "Hola, estoy interesado en el",
+    // Natural language search
+    nlLabel: "Búsqueda Inteligente",
+    nlPlaceholder: "Ej: BMW blanco automático menos de $30,000 o SUV menos de 50,000 millas...",
+    nlBtn: "Buscar",
+    nlClear: "Limpiar búsqueda",
+    nlNoResults: "Ningún vehículo coincide con tu búsqueda. Intenta con otras palabras.",
   }
 };
 
@@ -228,6 +244,8 @@ export default function HomePage() {
   const [activePublicImageIndex, setActivePublicImageIndex] = useState(0);
   
   const [searchActive, setSearchActive] = useState(false);
+  const [nlQuery, setNlQuery] = useState('');
+  const [nlResults, setNlResults] = useState<any[] | null>(null);
 
   // --- ESTADOS TESTIMONIOS ---
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
@@ -480,6 +498,49 @@ export default function HomePage() {
     setSelectedBrand('');
     setSelectedModel('');
     setCurrentPrice(maxInventoryPrice);
+    setNlQuery('');
+    setNlResults(null);
+  };
+
+  const handleNLSearch = () => {
+    const q = nlQuery.trim().toLowerCase();
+    if (!q) { setNlResults(null); return; }
+
+    // Extract max price: "under 30000", "$30k", "menos de 30,000"
+    let maxPrice = Infinity;
+    const priceMatch = q.match(/(?:under|less than|below|menos de|hasta|max|máximo)\s*\$?\s*([\d,.]+)\s*k?/i) || q.match(/\$\s*([\d,.]+)\s*k?/i);
+    if (priceMatch) {
+      let val = parseFloat(priceMatch[1].replace(/[,.]/g, (m) => m === ',' ? '' : '.'));
+      if (/\d+k/i.test(priceMatch[0]) && val < 1000) val *= 1000;
+      maxPrice = val;
+    }
+
+    // Extract max miles: "under 50000 miles", "menos de 50000 millas"
+    let maxMiles = Infinity;
+    const milesMatch = q.match(/(?:under|less than|below|menos de|hasta)\s*([\d,]+)\s*(?:miles?|millas?|mi\b)/i);
+    if (milesMatch) maxMiles = parseFloat(milesMatch[1].replace(/,/g, ''));
+
+    // Transmission preference
+    const wantsAuto = /\b(automatic|auto|automático|automatico)\b/i.test(q);
+    const wantsManual = /\bmanual\b/i.test(q);
+
+    // Keywords to match against car fields
+    const stopWords = new Set(['i','a','an','the','and','or','for','with','want','need','looking','quiero','busco','un','una','de','el','la','que','con','por','en','y','o','is','are','has']);
+    const keywords = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+    const results = inventory.filter((car: any) => {
+      if (car.status === 'Vendido') return false;
+      if (maxPrice < Infinity && (car.price || 0) > maxPrice) return false;
+      if (maxMiles < Infinity && parseInt(car.miles || '0') > maxMiles) return false;
+      if (wantsAuto && !car.transmission?.toLowerCase().includes('auto')) return false;
+      if (wantsManual && !car.transmission?.toLowerCase().includes('manual')) return false;
+
+      const carText = `${car.brand} ${car.model} ${car.year} ${car.trim} ${car.color} ${car.interior_color} ${car.engine} ${car.transmission} ${car.description}`.toLowerCase();
+      return keywords.some(kw => carText.includes(kw));
+    });
+
+    setNlResults(results);
+    setSearchActive(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1119,6 +1180,24 @@ export default function HomePage() {
             </div>
           </div>
 
+          <div className="mb-4 bg-[#111C2D]/60 p-4 md:p-6 rounded-2xl backdrop-blur-3xl border border-sierra-gold/20 shadow-lg relative z-20">
+            <div className="mb-3 text-center md:text-left"><h4 className="text-[10px] md:text-xs text-sierra-gold uppercase tracking-[0.4em] font-bold">{t.nlLabel} ✦</h4></div>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={nlQuery}
+                onChange={(e) => setNlQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleNLSearch()}
+                placeholder={t.nlPlaceholder}
+                className="flex-1 bg-transparent border-b border-white/20 focus:border-sierra-gold outline-none text-white text-sm py-2 placeholder:text-white/30 transition-all"
+              />
+              <button onClick={handleNLSearch} className="px-5 py-2 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all text-xs uppercase tracking-widest shrink-0">{t.nlBtn}</button>
+            </div>
+            {nlResults !== null && (
+              <button onClick={handleClearSearch} className="mt-3 text-[10px] text-white/40 hover:text-white uppercase tracking-widest transition-colors">{t.nlClear} ×</button>
+            )}
+          </div>
+
           <div className="mb-8 bg-[#111C2D]/60 p-4 md:p-8 rounded-2xl backdrop-blur-3xl border border-white/10 shadow-lg relative z-20">
             <div className="mb-4 text-center md:text-left"><h4 className="text-[10px] md:text-xs text-sierra-gold uppercase tracking-[0.4em] font-bold">{t.advSearch}</h4></div>
             <div className="flex flex-col md:flex-row gap-6 md:gap-8 justify-between items-end w-full">
@@ -1155,6 +1234,18 @@ export default function HomePage() {
           ) : inventory.length === 0 ? (
             <div className="p-10 md:p-20 text-center bg-white/5 rounded-2xl border border-white/5">
               <p className="text-white/50 uppercase font-bold tracking-widest text-xs md:text-sm">{t.preparing}</p>
+            </div>
+          ) : nlResults !== null ? (
+            <div className="animate-in fade-in duration-700">
+              {nlResults.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  {nlResults.map((car: any) => renderCarCard(car, false))}
+                </div>
+              ) : (
+                <div className="p-10 md:p-20 text-center bg-[#162439] border border-white/5 rounded-2xl shadow-lg">
+                  <p className="text-white/60 text-sm md:text-base">{t.nlNoResults}</p>
+                </div>
+              )}
             </div>
           ) : searchActive ? (
             <div className="animate-in fade-in duration-700">
@@ -1398,7 +1489,7 @@ export default function HomePage() {
                   ) : (
                     <div className="flex gap-3">
                       <button onClick={() => setShowLeadForm(true)} className="flex-1 py-4 md:py-5 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all uppercase tracking-widest text-[10px] md:text-sm shadow-[0_0_20px_rgba(212,175,55,0.3)]">{t.reqDetailsBtn}</button>
-                      <a href={`https://wa.me/17868506179?text=${encodeURIComponent(`Hola, estoy interesado en el ${selectedCar?.year || ''} ${selectedCar?.brand || ''} ${selectedCar?.model || ''}.`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center px-4 md:px-5 py-4 md:py-5 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                      <a href={`https://wa.me/17868506179?text=${encodeURIComponent(`${t.waText} ${selectedCar?.year || ''} ${selectedCar?.brand || ''} ${selectedCar?.model || ''}.`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center px-4 md:px-5 py-4 md:py-5 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                       </a>
                       <a href="tel:+17868506179" className="flex items-center justify-center px-4 md:px-5 py-4 md:py-5 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)]">
@@ -1469,7 +1560,7 @@ export default function HomePage() {
             </div>
             <a href="https://wa.me/17868506179" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#25D366]/10 border border-[#25D366]/30 hover:bg-[#25D366] text-[#25D366] hover:text-white rounded-full text-xs font-bold uppercase tracking-widest transition-all">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Contactar por WhatsApp
+              {t.chatWhatsApp}
             </a>
           </div>
 
