@@ -71,7 +71,12 @@ const translations = {
     monSat: "Monday - Saturday",
     apptOnly: "* After-hours availability by appointment only.",
     followUs: "Follow Us",
-    rights: "© 2026 Sierra Apex Group LLC. All Rights Reserved."
+    rights: "© 2026 Sierra Apex Group LLC. All Rights Reserved.",
+    // Chat
+    chatWelcome1: "Hello. I'm the Sierra Apex Group virtual assistant. While our full AI is coming soon, you can send us any message or question here and our team will receive it directly.",
+    chatWelcome2: "Remember to leave your contact information (email or phone) if you'd like one of our sales team to reach out to you.",
+    chatReply: "✅ Message received. Our team will review it and get in touch with you soon.",
+    chatPlaceholder: "Type your message...",
   },
   es: {
     navInventory: "Inventario",
@@ -134,7 +139,12 @@ const translations = {
     monSat: "Lunes - Sábado",
     apptOnly: "* Disponibilidad fuera de horario laboral únicamente mediante previa cita.",
     followUs: "Síguenos",
-    rights: "© 2026 Sierra Apex Group LLC. Todos los derechos reservados."
+    rights: "© 2026 Sierra Apex Group LLC. Todos los derechos reservados.",
+    // Chat
+    chatWelcome1: "Hola. Soy el asistente virtual de Sierra Apex Group. Pronto estaré conectado a la IA completa, pero de momento puedes enviarnos cualquier mensaje o consulta por aquí y nuestro equipo lo recibirá directamente.",
+    chatWelcome2: "Recuerda dejar tu información de contacto (correo o teléfono) si quieres que uno de nuestros vendedores se ponga en contacto contigo.",
+    chatReply: "✅ Mensaje recibido. Nuestro equipo lo revisará y se pondrá en contacto contigo pronto.",
+    chatPlaceholder: "Escribe tu mensaje...",
   }
 };
 
@@ -229,10 +239,14 @@ export default function HomePage() {
 
   // --- ESTADOS DEL CHATBOT ---
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'bot', text: 'Hola. Soy el asistente virtual de Sierra Apex Group. Pronto estaré conectado a la IA completa, pero de momento puedes enviarnos cualquier mensaje o consulta por aquí y nuestro equipo lo recibirá directamente.' },
-    { role: 'bot', text: 'Recuerda dejar tu información de contacto (correo o teléfono) si quieres que uno de nuestros vendedores se ponga en contacto contigo.' }
-  ]);
+  const [chatMessages, setChatMessages] = useState<{ role: string; text: string }[]>([]);
+
+  useEffect(() => {
+    setChatMessages([
+      { role: 'bot', text: t.chatWelcome1 },
+      { role: 'bot', text: t.chatWelcome2 },
+    ]);
+  }, [lang]);
 
   const fetchPublicTestimonials = useCallback(async () => {
     const { data } = await supabase.from('testimonials').select('*').eq('status', 'Aprobado').order('created_at', { ascending: false });
@@ -406,7 +420,7 @@ export default function HomePage() {
     });
 
     setTimeout(() => {
-      setChatMessages(prev => [...prev, { role: 'bot', text: '✅ Mensaje recibido. Nuestro equipo lo revisará y se pondrá en contacto contigo pronto.' }]);
+      setChatMessages(prev => [...prev, { role: 'bot', text: t.chatReply }]);
     }, 1000);
   };
 
@@ -1446,7 +1460,7 @@ export default function HomePage() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()}
-                placeholder="Escribe tu mensaje..."
+                placeholder={t.chatPlaceholder}
                 className="w-full bg-white/5 border border-white/10 rounded-full py-3 md:py-4 pl-4 md:pl-5 pr-12 md:pr-14 text-xs md:text-sm text-white outline-none focus:border-sierra-gold transition-all"
               />
               <button onClick={handleSendChatMessage} className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-sierra-gold rounded-full flex items-center justify-center text-black hover:bg-white transition-colors">
