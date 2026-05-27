@@ -73,8 +73,8 @@ const translations = {
     followUs: "Follow Us",
     rights: "© 2026 Sierra Apex Group LLC. All Rights Reserved.",
     // Chat
-    chatWelcome1: "Hello. I'm the Sierra Apex Group virtual assistant. While our full AI is coming soon, you can send us any message or question here and our team will receive it directly.",
-    chatWelcome2: "Remember to leave your contact information (email or phone) if you'd like one of our sales team to reach out to you.",
+    chatWelcome1: "Hello! I'm the Sierra Apex Group assistant. You can search our inventory directly here — just type something like \"Honda under $20,000\" or \"automatic SUV\".",
+    chatWelcome2: "You can also leave any message or question and our team will get back to you. Remember to include your contact info (email or phone).",
     chatReply: "✅ Message received. Our team will review it and get in touch with you soon.",
     chatPlaceholder: "Type your message...",
     chatWhatsApp: "Contact via WhatsApp",
@@ -149,8 +149,8 @@ const translations = {
     followUs: "Síguenos",
     rights: "© 2026 Sierra Apex Group LLC. Todos los derechos reservados.",
     // Chat
-    chatWelcome1: "Hola. Soy el asistente virtual de Sierra Apex Group. Pronto estaré conectado a la IA completa, pero de momento puedes enviarnos cualquier mensaje o consulta por aquí y nuestro equipo lo recibirá directamente.",
-    chatWelcome2: "Recuerda dejar tu información de contacto (correo o teléfono) si quieres que uno de nuestros vendedores se ponga en contacto contigo.",
+    chatWelcome1: "¡Hola! Soy el asistente de Sierra Apex Group. Puedes buscar en nuestro inventario directamente aquí — escribe algo como \"Honda menos de $20,000\" o \"SUV automático\".",
+    chatWelcome2: "También puedes dejarnos cualquier mensaje o consulta y nuestro equipo te responderá. Recuerda incluir tu información de contacto (correo o teléfono).",
     chatReply: "✅ Mensaje recibido. Nuestro equipo lo revisará y se pondrá en contacto contigo pronto.",
     chatPlaceholder: "Escribe tu mensaje...",
     chatWhatsApp: "Contactar por WhatsApp",
@@ -431,6 +431,59 @@ export default function HomePage() {
     setChatMessages(prev => [...prev, { role: 'user', text: userText }]);
     setChatInput('');
 
+    // Check if message looks like an inventory search
+    const q = userText.toLowerCase();
+    const stopWords = new Set(['i','a','an','the','and','or','for','with','want','need','looking','quiero','busco','un','una','de','el','la','que','con','por','en','y','o','is','are','has','me','my','some','any','do','you','have','tienen','busco','hay']);
+    const keywords = q.split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.has(w));
+    const searchTriggers = /\b(car|vehicle|auto|carro|vehiculo|vehículo|suv|sedan|truck|camion|buy|comprar|looking for|buscando|need a|necesito|find|encontrar|show me|muéstrame|do you have|tienen)\b/i;
+    const isInventorySearch = searchTriggers.test(q) || (keywords.length > 0 && inventory.some((car: any) => {
+      const carText = [car.brand, car.model].map((v: any) => String(v || '').toLowerCase()).join(' ');
+      return keywords.some((kw: string) => carText.includes(kw));
+    }));
+
+    if (isInventorySearch && keywords.length > 0) {
+      // Run NL search logic
+      let maxPrice = Number.MAX_SAFE_INTEGER;
+      const priceRaw = q.match(/(?:under|below|less than|menos de|hasta)\s*\$?\s*(\d[\d,]*)\s*k?/i) || q.match(/\$\s*(\d[\d,]*)\s*k?/i);
+      if (priceRaw && priceRaw[1]) {
+        let val = Number(priceRaw[1].replace(/,/g, ''));
+        if (q.includes('k') && val < 1000) val = val * 1000;
+        if (val > 0) maxPrice = val;
+      }
+      let maxMiles = Number.MAX_SAFE_INTEGER;
+      const milesRaw = q.match(/(?:under|below|less than|menos de|hasta)\s*(\d[\d,]*)\s*(?:miles?|millas?)/i);
+      if (milesRaw && milesRaw[1]) {
+        const val = Number(milesRaw[1].replace(/,/g, ''));
+        if (val > 0) maxMiles = val;
+      }
+      const wantsAuto = /\b(automatic|automático|automatico)\b/i.test(q);
+      const wantsManual = /\bmanual\b/i.test(q);
+
+      const matches = inventory.filter((car: any) => {
+        if (car.status === 'Vendido') return false;
+        if (maxPrice < Number.MAX_SAFE_INTEGER && (Number(car.price) || 0) > maxPrice) return false;
+        if (maxMiles < Number.MAX_SAFE_INTEGER && (Number(car.miles) || 0) > maxMiles) return false;
+        if (wantsAuto && !String(car.transmission || '').toLowerCase().includes('auto')) return false;
+        if (wantsManual && !String(car.transmission || '').toLowerCase().includes('manual')) return false;
+        const carText = [car.brand, car.model, car.year, car.trim, car.color, car.engine, car.transmission, car.description]
+          .map((v: any) => String(v || '').toLowerCase()).join(' ');
+        return keywords.some((kw: string) => carText.includes(kw));
+      });
+
+      setTimeout(() => {
+        if (matches.length > 0) {
+          const carList = matches.slice(0, 5).map((c: any) => `• ${c.year} ${c.brand} ${c.model}${c.trim ? ' ' + c.trim : ''} — $${Number(c.price || 0).toLocaleString()}`).join('\n');
+          const more = matches.length > 5 ? (lang === 'es' ? `\n...y ${matches.length - 5} más.` : `\n...and ${matches.length - 5} more.`) : '';
+          const intro = lang === 'es' ? `Encontré ${matches.length} vehículo${matches.length > 1 ? 's' : ''} disponible${matches.length > 1 ? 's' : ''}:\n\n` : `I found ${matches.length} available vehicle${matches.length > 1 ? 's' : ''}:\n\n`;
+          setChatMessages(prev => [...prev, { role: 'bot', text: intro + carList + more }]);
+        } else {
+          setChatMessages(prev => [...prev, { role: 'bot', text: lang === 'es' ? 'No encontré vehículos que coincidan con tu búsqueda en este momento. ¿Puedo ayudarte con algo más?' : "I didn't find any matching vehicles right now. Can I help you with anything else?" }]);
+        }
+      }, 700);
+      return;
+    }
+
+    // Regular chat message — capture as lead
     await fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1183,29 +1236,6 @@ export default function HomePage() {
               )}
               <span className="text-[10px] md:text-xs text-white/50 tracking-[0.3em] font-bold uppercase">{inventory.filter(c => c.status !== 'Vendido').length} {t.available}</span>
             </div>
-          </div>
-
-          <div className="mb-4 bg-[#111C2D]/60 p-4 md:p-6 rounded-2xl backdrop-blur-3xl border border-sierra-gold/20 shadow-lg relative z-20">
-            <div className="mb-3 text-center md:text-left"><h4 className="text-[10px] md:text-xs text-sierra-gold uppercase tracking-[0.4em] font-bold">{t.nlLabel} ✦</h4></div>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={nlQuery}
-                onChange={(e) => setNlQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleNLSearch()}
-                placeholder={t.nlPlaceholder}
-                className="flex-1 bg-transparent border-b border-white/20 focus:border-sierra-gold outline-none text-white text-sm py-2 placeholder:text-white/30 transition-all"
-              />
-              <button onClick={handleNLSearch} className="px-5 py-2 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all text-xs uppercase tracking-widest shrink-0">{t.nlBtn}</button>
-            </div>
-            {nlResults !== null && (
-              <div className="mt-3 flex items-center gap-4">
-                <span className="text-xs font-bold text-sierra-gold uppercase tracking-widest">
-                  {nlResults.length > 0 ? `${nlResults.length} ${nlResults.length === 1 ? (lang === 'es' ? 'vehículo encontrado' : 'vehicle found') : (lang === 'es' ? 'vehículos encontrados' : 'vehicles found')}` : (lang === 'es' ? 'Sin resultados' : 'No results')}
-                </span>
-                <button onClick={handleClearSearch} className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest transition-colors">{t.nlClear} ×</button>
-              </div>
-            )}
           </div>
 
           <div className="mb-8 bg-[#111C2D]/60 p-4 md:p-8 rounded-2xl backdrop-blur-3xl border border-white/10 shadow-lg relative z-20">
