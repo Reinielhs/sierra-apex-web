@@ -209,7 +209,7 @@ export default function HomePage() {
     const { data, error } = await supabase
       .from('inventory')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('sort_order', { ascending: true });
 
     if (!error && data) {
       const sortedData = data.sort((a: any, b: any) => {
@@ -493,6 +493,28 @@ export default function HomePage() {
     setTimeout(() => {
       setChatMessages(prev => [...prev, { role: 'bot', text: t.chatReply }]);
     }, 1000);
+  };
+
+  const handleMoveVehicle = async (index: number, direction: 'up' | 'down') => {
+    const available = inventory.filter((c: any) => c.status !== 'Vendido');
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= available.length) return;
+    const carA = available[index];
+    const carB = available[swapIndex];
+    const authHeader = await getAuthHeader();
+    await Promise.all([
+      fetch('/api/admin/inventory', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ id: carA.id, sort_order: carB.sort_order ?? swapIndex }),
+      }),
+      fetch('/api/admin/inventory', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ id: carB.id, sort_order: carA.sort_order ?? index }),
+      }),
+    ]);
+    fetchInventory();
   };
 
   const handleToggleSold = async (id: number, currentStatus: string) => {
@@ -1025,8 +1047,8 @@ export default function HomePage() {
                       <button onClick={() => setAdminTab('add-vehicle')} className="px-8 py-3 bg-sierra-gold text-black rounded-lg text-xs font-bold uppercase tracking-widest">Añadir el primero</button>
                     </div>
                   ) : (
-                    inventory.map((car: any) => (
-                      <div key={car.id} className={`bg-[#162439] rounded-2xl border overflow-hidden flex flex-col md:flex-row shadow-lg hover:border-sierra-gold/30 transition-all ${car.status === 'Vendido' ? 'border-white/5 opacity-60' : 'border-white/5'}`}>
+                    inventory.filter((c: any) => c.status !== 'Vendido').map((car: any, index: number) => (
+                      <div key={car.id} className={`bg-[#162439] rounded-2xl border overflow-hidden flex flex-col md:flex-row shadow-lg hover:border-sierra-gold/30 transition-all border-white/5`}>
                         <div className="w-full md:w-64 h-48 md:h-auto relative bg-black/50">
                           <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover opacity-90" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
                           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-xs font-bold text-white tracking-widest">{car?.stock || 'N/A'}</div>
@@ -1050,15 +1072,39 @@ export default function HomePage() {
                           </div>
                         </div>
                         <div className="w-full md:w-48 bg-[#0B1320] border-t md:border-t-0 md:border-l border-white/5 p-4 md:p-6 flex flex-row md:flex-col justify-center gap-3">
+                          <div className="flex gap-2 w-full">
+                            <button onClick={() => handleMoveVehicle(index, 'up')} disabled={index === 0} className="flex-1 py-2 border border-white/10 rounded-lg text-sm font-bold hover:bg-sierra-gold hover:text-black hover:border-sierra-gold transition-all disabled:opacity-20 disabled:cursor-not-allowed">↑</button>
+                            <button onClick={() => handleMoveVehicle(index, 'down')} disabled={index === inventory.filter((c: any) => c.status !== 'Vendido').length - 1} className="flex-1 py-2 border border-white/10 rounded-lg text-sm font-bold hover:bg-sierra-gold hover:text-black hover:border-sierra-gold transition-all disabled:opacity-20 disabled:cursor-not-allowed">↓</button>
+                          </div>
                           <button onClick={() => handleEditClick(car)} className="flex-1 md:w-full py-2 md:py-3 border border-white/10 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest hover:bg-[#162439] transition-all">Editar</button>
                           <button onClick={() => handleDeleteVehicle(car.id)} className="flex-1 md:w-full py-2 md:py-3 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all">Eliminar</button>
-                          <button onClick={() => handleToggleSold(car.id, car.status)} className={`w-full py-2 md:py-3 border rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all col-span-2 md:col-span-1 ${car.status === 'Vendido' ? 'border-white/50 text-white hover:bg-white hover:text-black' : 'border-sierra-gold/50 text-sierra-gold hover:bg-sierra-gold hover:text-black shadow-[0_0_15px_rgba(212,175,55,0.1)]'}`}>
-                            {car.status === 'Vendido' ? 'Hacer Disponible' : 'Marcar Vendido'}
+                          <button onClick={() => handleToggleSold(car.id, car.status)} className="w-full py-2 md:py-3 border border-sierra-gold/50 text-sierra-gold hover:bg-sierra-gold hover:text-black rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                            Marcar Vendido
                           </button>
                         </div>
                       </div>
                     ))
                   )}
+                  {/* Carros vendidos al final, sin botones de orden */}
+                  {inventory.filter((c: any) => c.status === 'Vendido').map((car: any) => (
+                    <div key={car.id} className="bg-[#162439] rounded-2xl border border-white/5 overflow-hidden flex flex-col md:flex-row shadow-lg opacity-50">
+                      <div className="w-full md:w-64 h-48 md:h-auto relative bg-black/50">
+                        <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
+                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-xs font-bold text-white tracking-widest">{car?.stock || 'N/A'}</div>
+                      </div>
+                      <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg md:text-xl font-bold uppercase tracking-tight">{car?.year || ''} {car?.brand || ''} {car?.model || ''} {car?.trim || ''}</h3>
+                          <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Vendido</span>
+                        </div>
+                        <p className="text-[10px] md:text-sm text-white/50 uppercase tracking-widest">VIN: {car?.vin || 'No Registrado'}</p>
+                      </div>
+                      <div className="w-full md:w-48 bg-[#0B1320] border-t md:border-t-0 md:border-l border-white/5 p-4 md:p-6 flex flex-row md:flex-col justify-center gap-3">
+                        <button onClick={() => handleToggleSold(car.id, car.status)} className="w-full py-2 md:py-3 border border-white/30 text-white hover:bg-white hover:text-black rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all">Hacer Disponible</button>
+                        <button onClick={() => handleDeleteVehicle(car.id)} className="w-full py-2 md:py-3 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all">Eliminar</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

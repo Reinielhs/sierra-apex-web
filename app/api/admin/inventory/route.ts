@@ -33,15 +33,20 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-// PATCH /api/admin/inventory — toggle sold status
+// PATCH /api/admin/inventory — update status or sort_order
 export async function PATCH(request: NextRequest) {
   const user = await verifyAdmin(request);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id, status } = await request.json();
-  if (!id || !status) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+  const { id, status, sort_order } = await request.json();
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  const { error } = await getServiceClient().from('inventory').update({ status }).eq('id', id);
+  const updates: Record<string, unknown> = {};
+  if (status !== undefined) updates.status = status;
+  if (sort_order !== undefined) updates.sort_order = sort_order;
+  if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+
+  const { error } = await getServiceClient().from('inventory').update(updates).eq('id', id);
   if (error) return NextResponse.json({ error: 'Database error' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
