@@ -1397,6 +1397,7 @@ export default function HomePage() {
                 <li className="flex flex-col"><span className="text-[10px] md:text-xs uppercase text-white/40 tracking-widest mb-1 font-bold">CEO</span><span className="text-white">Reiniel Hernandez Sierra</span></li>
                 <li className="flex flex-col"><span className="text-[10px] md:text-xs uppercase text-white/40 tracking-widest mb-1 font-bold">Phone</span><a href="tel:7868506179" className="hover:text-sierra-gold transition-colors">786.850.6179</a></li>
                 <li className="flex flex-col"><span className="text-[10px] md:text-xs uppercase text-white/40 tracking-widest mb-1 font-bold">Email</span><a href="mailto:Reiniel@sierraapexgroup.com" className="hover:text-sierra-gold transition-colors break-all">Reiniel@sierraapexgroup.com</a></li>
+                <li className="flex flex-col"><span className="text-[10px] md:text-xs uppercase text-white/40 tracking-widest mb-1 font-bold">Address</span><a href="https://maps.google.com/?q=234+Prospect+Rd,+Oakland+Park,+FL+33309" target="_blank" rel="noopener noreferrer" className="hover:text-sierra-gold transition-colors leading-relaxed">234 Prospect Rd<br />Oakland Park, FL 33309</a></li>
               </ul>
             </div>
             <div>
