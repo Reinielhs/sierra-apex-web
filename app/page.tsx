@@ -506,42 +506,46 @@ export default function HomePage() {
     const q = nlQuery.trim().toLowerCase();
     if (!q) { setNlResults(null); return; }
 
-    // Extract max price: "under 30000", "$30k", "menos de 30,000"
-    let maxPrice = Infinity;
-    const priceMatch = q.match(/(?:under|less than|below|menos de|hasta|max|máximo)\s*\$?\s*([\d,.]+)\s*k?/i) || q.match(/\$\s*([\d,.]+)\s*k?/i);
-    if (priceMatch) {
-      let val = parseFloat(priceMatch[1].replace(/[,.]/g, (m) => m === ',' ? '' : '.'));
-      if (/\d+k/i.test(priceMatch[0]) && val < 1000) val *= 1000;
-      maxPrice = val;
-    }
-
-    // Extract max miles: "under 50000 miles", "menos de 50000 millas"
-    let maxMiles = Infinity;
-    const milesMatch = q.match(/(?:under|less than|below|menos de|hasta)\s*([\d,]+)\s*(?:miles?|millas?|mi\b)/i);
-    if (milesMatch) maxMiles = parseFloat(milesMatch[1].replace(/,/g, ''));
-
-    // Transmission preference
-    const wantsAuto = /\b(automatic|auto|automático|automatico)\b/i.test(q);
-    const wantsManual = /\bmanual\b/i.test(q);
-
-    // Keywords to match against car fields
-    const stopWords = new Set(['i','a','an','the','and','or','for','with','want','need','looking','quiero','busco','un','una','de','el','la','que','con','por','en','y','o','is','are','has']);
+    const stopWords = new Set(['i','a','an','the','and','or','for','with','want','need','looking','quiero','busco','un','una','de','el','la','que','con','por','en','y','o','is','are','has','me','my','some','any']);
     const keywords = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
 
-    const results = inventory.filter((car: any) => {
-      if (car.status === 'Vendido') return false;
-      if (maxPrice < Infinity && (car.price || 0) > maxPrice) return false;
-      if (maxMiles < Infinity && parseInt(car.miles || '0') > maxMiles) return false;
-      if (wantsAuto && !car.transmission?.toLowerCase().includes('auto')) return false;
-      if (wantsManual && !car.transmission?.toLowerCase().includes('manual')) return false;
+    // Extract max price from phrases like "under 30000" or "30k" or "$30,000"
+    let maxPrice = Number.MAX_SAFE_INTEGER;
+    const priceRaw = q.match(/(?:under|below|less than|menos de|hasta)\s*\$?\s*(\d[\d,]*)\s*k?/i) || q.match(/\$\s*(\d[\d,]*)\s*k?/i);
+    if (priceRaw && priceRaw[1]) {
+      let val = Number(priceRaw[1].replace(/,/g, ''));
+      if (q.includes('k') && val < 1000) val = val * 1000;
+      if (val > 0) maxPrice = val;
+    }
 
-      const carText = `${car.brand} ${car.model} ${car.year} ${car.trim} ${car.color} ${car.interior_color} ${car.engine} ${car.transmission} ${car.description}`.toLowerCase();
+    // Extract max miles from phrases like "under 50000 miles"
+    let maxMiles = Number.MAX_SAFE_INTEGER;
+    const milesRaw = q.match(/(?:under|below|less than|menos de|hasta)\s*(\d[\d,]*)\s*(?:miles?|millas?)/i);
+    if (milesRaw && milesRaw[1]) {
+      const val = Number(milesRaw[1].replace(/,/g, ''));
+      if (val > 0) maxMiles = val;
+    }
+
+    const wantsAuto = /\b(automatic|automático|automatico)\b/i.test(q);
+    const wantsManual = /\bmanual\b/i.test(q);
+
+    const filtered = inventory.filter((car: any) => {
+      if (car.status === 'Vendido') return false;
+      if (maxPrice < Number.MAX_SAFE_INTEGER && (Number(car.price) || 0) > maxPrice) return false;
+      if (maxMiles < Number.MAX_SAFE_INTEGER && (Number(car.miles) || 0) > maxMiles) return false;
+      if (wantsAuto && !String(car.transmission || '').toLowerCase().includes('auto')) return false;
+      if (wantsManual && !String(car.transmission || '').toLowerCase().includes('manual')) return false;
+
+      if (keywords.length === 0) return true;
+      const carText = [car.brand, car.model, car.year, car.trim, car.color, car.interior_color, car.engine, car.transmission, car.description]
+        .map(v => String(v || '').toLowerCase())
+        .join(' ');
       return keywords.some(kw => carText.includes(kw));
     });
 
-    setNlResults(results);
+    setNlResults(filtered);
     setSearchActive(false);
-    scrollToSection('inventario');
+    setTimeout(() => scrollToSection('inventario'), 50);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1195,7 +1199,12 @@ export default function HomePage() {
               <button onClick={handleNLSearch} className="px-5 py-2 bg-sierra-gold text-black font-bold rounded-xl hover:bg-white transition-all text-xs uppercase tracking-widest shrink-0">{t.nlBtn}</button>
             </div>
             {nlResults !== null && (
-              <button onClick={handleClearSearch} className="mt-3 text-[10px] text-white/40 hover:text-white uppercase tracking-widest transition-colors">{t.nlClear} ×</button>
+              <div className="mt-3 flex items-center gap-4">
+                <span className="text-xs font-bold text-sierra-gold uppercase tracking-widest">
+                  {nlResults.length > 0 ? `${nlResults.length} ${nlResults.length === 1 ? (lang === 'es' ? 'vehículo encontrado' : 'vehicle found') : (lang === 'es' ? 'vehículos encontrados' : 'vehicles found')}` : (lang === 'es' ? 'Sin resultados' : 'No results')}
+                </span>
+                <button onClick={handleClearSearch} className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest transition-colors">{t.nlClear} ×</button>
+              </div>
             )}
           </div>
 
