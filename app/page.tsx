@@ -1390,7 +1390,6 @@ export default function HomePage() {
             <div className="col-span-1 flex flex-col justify-start">
               <div className="text-2xl md:text-3xl font-bold tracking-widest uppercase mb-4 md:mb-6 drop-shadow-md"><span className="text-white">SIERRA</span><br/><span className="text-sierra-gold">APEX GROUP</span></div>
               <p className="text-sm md:text-base text-white/60 leading-relaxed font-light">{t.redefining}</p>
-              <a href="https://maps.google.com/?q=234+Prospect+Rd,+Oakland+Park,+FL+33309" target="_blank" rel="noopener noreferrer" className="mt-4 text-sm text-white/50 hover:text-sierra-gold transition-colors leading-relaxed block">📍 234 Prospect Rd, Oakland Park, FL 33309</a>
             </div>
             <div>
               <h4 className="text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-sierra-gold mb-4 md:mb-6">{t.directContact}</h4>
@@ -1405,6 +1404,7 @@ export default function HomePage() {
               <ul className="space-y-4 md:space-y-5 text-sm md:text-base font-light text-white/80">
                 <li className="flex justify-between border-b border-white/10 pb-2 md:pb-3"><span>{t.monSat}</span><span className="text-white font-bold">8:00 AM - 5:00 PM</span></li>
                 <li className="pt-2 md:pt-3"><p className="text-xs md:text-sm leading-relaxed italic text-white/50">{t.apptOnly}</p></li>
+                <li className="pt-2 md:pt-3"><a href="https://maps.google.com/?q=234+Prospect+Rd,+Oakland+Park,+FL+33309" target="_blank" rel="noopener noreferrer" className="text-xs md:text-sm text-white/50 hover:text-sierra-gold transition-colors leading-relaxed">📍 234 Prospect Rd, Oakland Park, FL 33309</a></li>
               </ul>
             </div>
             <div>
