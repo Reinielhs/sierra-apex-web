@@ -1107,6 +1107,18 @@ export default function HomePage() {
                           <button onClick={() => handleToggleSold(car.id, car.status)} className="w-full py-2 md:py-3 border border-sierra-gold/50 text-sierra-gold hover:bg-sierra-gold hover:text-black rounded-lg text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all shadow-[0_0_15px_rgba(212,175,55,0.1)]">
                             Marcar Vendido
                           </button>
+                          <div className="flex gap-2 w-full pt-1 border-t border-white/5">
+                            <a
+                              href={`https://www.autotrader.com/cars-for-sale/used-cars/${encodeURIComponent((car.brand || '').toLowerCase().replace(/\s+/g, '-'))}/${encodeURIComponent((car.model || '').toLowerCase().replace(/\s+/g, '-'))}/?startYear=${car.year}&endYear=${car.year}${car.miles ? `&maxMileage=${car.miles}` : ''}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="flex-1 py-2 border border-white/10 rounded-lg text-[10px] font-bold text-center text-white/50 hover:border-sierra-gold hover:text-sierra-gold transition-all"
+                            >AT ↗</a>
+                            <a
+                              href={`https://www.cars.com/shopping/results/?make_slug=${encodeURIComponent((car.brand || '').toLowerCase().replace(/\s+/g, '_'))}&model_slug=${encodeURIComponent((car.model || '').toLowerCase().replace(/\s+/g, '_'))}&year_min=${car.year}&year_max=${car.year}&maximum_distance=75&stock_type=used&sort=list_price_asc${car.miles ? `&mileage_max=${car.miles}` : ''}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="flex-1 py-2 border border-white/10 rounded-lg text-[10px] font-bold text-center text-white/50 hover:border-sierra-gold hover:text-sierra-gold transition-all"
+                            >Cars ↗</a>
+                          </div>
                         </div>
                       </div>
                     ))
