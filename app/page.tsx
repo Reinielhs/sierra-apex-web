@@ -537,6 +537,8 @@ export default function HomePage() {
   const [vinToDecode, setVinToDecode] = useState('');
   const [isDecoding, setIsDecoding] = useState(false);
   const [decodedData, setDecodedData] = useState<any>(null);
+  const [marketData, setMarketData] = useState<any>(null);
+  const [isCheckingMarket, setIsCheckingMarket] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -682,6 +684,28 @@ export default function HomePage() {
     }
   };
 
+  const handleCheckMarketPrices = async () => {
+    if (!newCarForm.make || !newCarForm.model || !newCarForm.year) return;
+    setIsCheckingMarket(true);
+    setMarketData(null);
+    try {
+      const params = new URLSearchParams({
+        make: newCarForm.make,
+        model: newCarForm.model,
+        year: newCarForm.year,
+        ...(newCarForm.miles ? { miles: newCarForm.miles } : {}),
+      });
+      const authHeader = await getAuthHeader();
+      const res = await fetch(`/api/admin/market-prices?${params}`, { headers: authHeader });
+      const data = await res.json();
+      setMarketData(data);
+    } catch {
+      setMarketData({ error: true });
+    } finally {
+      setIsCheckingMarket(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setIsUploading(true);
@@ -816,6 +840,7 @@ export default function HomePage() {
 
   const resetForm = () => {
     setAdminTab('inventory'); setEditingVehicleId(null); setVinToDecode(''); setDecodedData(null);
+    setMarketData(null);
     setUploadedImages([]); setUploadProgress(0);
     setNewCarForm({ make: '', model: '', year: '', trim: '', engine: '', transmission: '', miles: '', price: '', description: '', color: '', interior: '', interiorColor: '' });
   };
@@ -970,10 +995,70 @@ export default function HomePage() {
                     </div>
 
                     <h3 className="text-base font-bold text-white uppercase tracking-widest mb-6 border-t border-white/5 pt-8">Gestión Interna</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
                       <div><label className="text-xs uppercase text-white/50 tracking-widest mb-2 block font-bold">Stock #</label><input type="text" placeholder="Auto-generado" className="w-full bg-[#111C2D] border border-white/10 rounded-xl p-3 outline-none text-sm text-white/50 cursor-not-allowed" disabled /></div>
-                      <div><label className="text-xs uppercase text-white/50 tracking-widest mb-2 block font-bold">Millaje Actual</label><input type="number" placeholder="Ej: 15000" value={newCarForm.miles} onChange={(e) => setNewCarForm({...newCarForm, miles: e.target.value})} className="w-full bg-[#111C2D] border border-white/10 rounded-xl p-3 outline-none focus:border-sierra-gold text-sm" /></div>
+                      <div><label className="text-xs uppercase text-white/50 tracking-widest mb-2 block font-bold">Millaje Actual</label><input type="number" placeholder="Ej: 15000" value={newCarForm.miles} onChange={(e) => { setNewCarForm({...newCarForm, miles: e.target.value}); setMarketData(null); }} className="w-full bg-[#111C2D] border border-white/10 rounded-xl p-3 outline-none focus:border-sierra-gold text-sm" /></div>
                       <div><label className="text-xs uppercase text-sierra-gold tracking-widest mb-2 block font-bold">Precio Venta ($)</label><input type="number" placeholder="0.00" value={newCarForm.price} onChange={(e) => setNewCarForm({...newCarForm, price: e.target.value})} className="w-full bg-[#111C2D] border border-sierra-gold/50 rounded-xl p-3 outline-none focus:border-sierra-gold text-sm text-sierra-gold font-bold" /></div>
+                    </div>
+
+                    <div className="mb-8">
+                      <button
+                        onClick={handleCheckMarketPrices}
+                        disabled={isCheckingMarket || !newCarForm.make || !newCarForm.model || !newCarForm.year}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border ${isCheckingMarket || !newCarForm.make || !newCarForm.model || !newCarForm.year ? 'border-white/10 text-white/30 cursor-not-allowed' : 'border-sierra-gold/40 text-sierra-gold hover:bg-sierra-gold/10'}`}
+                      >
+                        {isCheckingMarket ? (
+                          <><span className="animate-spin inline-block w-3 h-3 border border-sierra-gold border-t-transparent rounded-full"></span> Consultando mercado...</>
+                        ) : (
+                          <>&#9741; Ver precios en dealers cercanos</>
+                        )}
+                      </button>
+
+                      {marketData && !marketData.error && (
+                        <div className="mt-4 bg-[#111C2D] border border-white/10 rounded-xl p-5 animate-in fade-in duration-300">
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-xs uppercase text-sierra-gold tracking-widest font-bold">Mercado — {newCarForm.year} {newCarForm.make} {newCarForm.model}</span>
+                            {marketData.stats && <span className="text-xs text-white/40">{marketData.stats.count} vehículos encontrados</span>}
+                          </div>
+                          {marketData.stats ? (
+                            <>
+                              <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div className="bg-white/5 rounded-lg p-3 text-center">
+                                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Mínimo</p>
+                                  <p className="text-sm font-bold text-green-400">${marketData.stats.min.toLocaleString()}</p>
+                                </div>
+                                <div className="bg-sierra-gold/10 border border-sierra-gold/20 rounded-lg p-3 text-center">
+                                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Promedio</p>
+                                  <p className="text-sm font-bold text-sierra-gold">${marketData.stats.avg.toLocaleString()}</p>
+                                </div>
+                                <div className="bg-white/5 rounded-lg p-3 text-center">
+                                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Máximo</p>
+                                  <p className="text-sm font-bold text-white/70">${marketData.stats.max.toLocaleString()}</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {marketData.listings.slice(0, 4).map((l: any, i: number) => (
+                                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-white/5 last:border-0">
+                                    <div>
+                                      <span className="text-white/70 font-medium">{l.dealer || 'Dealer'}</span>
+                                      <span className="text-white/30 ml-2">{l.city}, {l.state}{l.distance ? ` · ${l.distance} mi` : ''}</span>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="text-sierra-gold font-bold">${l.price?.toLocaleString()}</span>
+                                      {l.miles && <span className="text-white/30 ml-2">{l.miles.toLocaleString()} mi</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-sm text-white/40">No se encontraron vehículos similares en el área.</p>
+                          )}
+                        </div>
+                      )}
+                      {marketData?.error && (
+                        <p className="mt-3 text-xs text-red-400">No se pudo obtener datos del mercado. Verifica la configuración del API key.</p>
+                      )}
                     </div>
 
                     <div className="mb-8">
