@@ -504,21 +504,18 @@ export default function HomePage() {
     const available = inventory.filter((c: any) => c.status !== 'Vendido');
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= available.length) return;
-    const carA = available[index];
-    const carB = available[swapIndex];
+    const reordered = [...available];
+    [reordered[index], reordered[swapIndex]] = [reordered[swapIndex], reordered[index]];
     const authHeader = await getAuthHeader();
-    await Promise.all([
-      fetch('/api/admin/inventory', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ id: carA.id, sort_order: carB.sort_order ?? swapIndex }),
-      }),
-      fetch('/api/admin/inventory', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
-        body: JSON.stringify({ id: carB.id, sort_order: carA.sort_order ?? index }),
-      }),
-    ]);
+    await Promise.all(
+      reordered.map((car: any, i: number) =>
+        fetch('/api/admin/inventory', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', ...authHeader },
+          body: JSON.stringify({ id: car.id, sort_order: i }),
+        })
+      )
+    );
     fetchInventory();
   };
 
