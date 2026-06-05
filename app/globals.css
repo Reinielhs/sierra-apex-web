@@ -13,3 +13,10 @@ body {
   background-color: black;
   color: white;
 }
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

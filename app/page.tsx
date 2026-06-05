@@ -169,7 +169,7 @@ const translations = {
   }
 };
 
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=1000&auto=format&fit=crop';
+const NO_PHOTO_SVG = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><rect width='800' height='600' fill='%23111111'/><rect x='280' y='220' width='240' height='180' rx='14' stroke='%23333333' stroke-width='3' fill='none'/><circle cx='400' cy='310' r='55' stroke='%23333333' stroke-width='3' fill='none'/><circle cx='400' cy='310' r='35' stroke='%23333333' stroke-width='3' fill='none'/><path d='M330 220 L350 195 L450 195 L470 220' stroke='%23333333' stroke-width='3' fill='none' stroke-linejoin='round'/><circle cx='472' cy='240' r='10' fill='%23333333'/><text x='400' y='445' text-anchor='middle' fill='%23444444' font-family='system-ui,sans-serif' font-size='16' letter-spacing='3'>SIN FOTO</text></svg>";
 
 export default function HomePage() {
   // ==========================================
@@ -682,19 +682,35 @@ export default function HomePage() {
     }
   };
 
+  const convertToJpeg = (file: File): Promise<Blob> => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Conversion failed')), 'image/jpeg', 0.9);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load failed')); };
+    img.src = url;
+  });
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setIsUploading(true);
-    setUploadProgress(1); 
+    setUploadProgress(1);
     const filesArray = Array.from(e.target.files);
     const newUrls: string[] = [];
     try {
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i];
-        const fileExt = file.name.split('.').pop() || 'jpg';
+        const blob = await convertToJpeg(file);
         const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-        const fileName = `${Date.now()}-${uuid}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('vehicles').upload(fileName, file);
+        const fileName = `${Date.now()}-${uuid}.jpg`;
+        const { error: uploadError } = await supabase.storage.from('vehicles').upload(fileName, blob, { contentType: 'image/jpeg' });
         if (uploadError) throw uploadError;
         const { data } = supabase.storage.from('vehicles').getPublicUrl(fileName);
         newUrls.push(data.publicUrl);
@@ -705,7 +721,7 @@ export default function HomePage() {
       alert('Hubo un error al subir las fotos.');
     } finally {
       setTimeout(() => { setIsUploading(false); setUploadProgress(0); }, 1000);
-      if (fileInputRef.current) fileInputRef.current.value = ''; 
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -771,7 +787,7 @@ export default function HomePage() {
       miles: newCarForm.miles ? newCarForm.miles.toString() : '0', description: newCarForm.description,
       color: newCarForm.color, interior: newCarForm.interior, interior_color: newCarForm.interiorColor,
       status: 'Disponible',
-      image: uploadedImages.length > 0 ? uploadedImages[0] : (editingVehicleId ? undefined : DEFAULT_IMAGE),
+      image: uploadedImages.length > 0 ? uploadedImages[0] : undefined,
       images: uploadedImages
     };
     if (dbPayload.image === undefined) delete dbPayload.image;
@@ -826,7 +842,7 @@ export default function HomePage() {
   const getPrimaryImage = (car: any) => {
     if (car?.image) return car.image;
     if (car?.images && Array.isArray(car.images) && car.images.length > 0) return car.images[0];
-    return DEFAULT_IMAGE;
+    return NO_PHOTO_SVG;
   };
 
   // ==========================================
@@ -843,7 +859,7 @@ export default function HomePage() {
             src={primaryImgUrl} 
             alt={car?.model || 'Auto'} 
             className={`w-full h-full object-cover transition-transform duration-1000 ${!isSold && 'group-hover:scale-110 opacity-90 group-hover:opacity-100'}`} 
-            onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }}
+            onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }}
           />
           <div className="absolute top-3 right-3 bg-[#111C2D]/80 backdrop-blur-md px-3 py-1 rounded-md border border-white/10"><span className="text-xs font-bold text-white tracking-widest">{car?.year || ''}</span></div>
           {car?.images && car.images.length > 1 && <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded border border-white/10 text-xs font-bold text-white tracking-widest">+{car.images.length - 1} Fotos</div>}
@@ -1029,7 +1045,7 @@ export default function HomePage() {
                             key={idx} draggable onDragStart={() => handleDragStart(idx)} onDragOver={handleDragOver} onDrop={() => handleDrop(idx)}
                             className={`relative w-32 h-24 md:w-48 md:h-32 shrink-0 rounded-xl overflow-hidden group border-2 cursor-grab active:cursor-grabbing transition-all ${idx === 0 ? 'border-sierra-gold' : 'border-white/10'} ${draggedImgIndex === idx ? 'opacity-50' : 'opacity-100'}`}
                           >
-                            <img src={url} className="w-full h-full object-cover pointer-events-none" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
+                            <img src={url} className="w-full h-full object-cover pointer-events-none" onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }} />
                             {idx === 0 && <span className="absolute top-2 left-2 bg-sierra-gold text-black text-[10px] md:text-xs font-bold px-2 py-0.5 rounded shadow-lg uppercase tracking-widest z-10">Principal</span>}
                             
                             <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
@@ -1076,7 +1092,7 @@ export default function HomePage() {
                     inventory.filter((c: any) => c.status !== 'Vendido').map((car: any, index: number) => (
                       <div key={car.id} className={`bg-[#162439] rounded-2xl border overflow-hidden flex flex-col md:flex-row shadow-lg hover:border-sierra-gold/30 transition-all border-white/5`}>
                         <div className="w-full md:w-64 h-48 md:h-auto relative bg-black/50">
-                          <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover opacity-90" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
+                          <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover opacity-90" onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }} />
                           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-xs font-bold text-white tracking-widest">{car?.stock || 'N/A'}</div>
                         </div>
                         <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
@@ -1127,7 +1143,7 @@ export default function HomePage() {
                   {inventory.filter((c: any) => c.status === 'Vendido').map((car: any) => (
                     <div key={car.id} className="bg-[#162439] rounded-2xl border border-white/5 overflow-hidden flex flex-col md:flex-row shadow-lg opacity-50">
                       <div className="w-full md:w-64 h-48 md:h-auto relative bg-black/50">
-                        <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }} />
+                        <img src={getPrimaryImage(car)} alt={car?.model || 'Auto'} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }} />
                         <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded border border-white/10 text-xs font-bold text-white tracking-widest">{car?.stock || 'N/A'}</div>
                       </div>
                       <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
@@ -1558,7 +1574,7 @@ export default function HomePage() {
                   src={selectedCar?.images && selectedCar.images.length > 0 && typeof selectedCar.images !== 'string' ? selectedCar.images[activePublicImageIndex] : getPrimaryImage(selectedCar)} 
                   alt={selectedCar?.brand || 'Auto'} 
                   className="w-full h-full object-contain bg-[#050B14]" 
-                  onError={(e) => { e.currentTarget.src = DEFAULT_IMAGE; }}
+                  onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }}
                 />
 
                 {selectedCar?.status === 'Vendido' && (
