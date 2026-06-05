@@ -15,6 +15,19 @@ async function verifyAdmin(request: NextRequest) {
   return user;
 }
 
+// DELETE /api/admin/leads — delete lead
+export async function DELETE(request: NextRequest) {
+  const user = await verifyAdmin(request);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { id } = await request.json();
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  const { error } = await getServiceClient().from('leads').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: 'Database error' }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
 // PATCH /api/admin/leads — update lead status
 export async function PATCH(request: NextRequest) {
   const user = await verifyAdmin(request);

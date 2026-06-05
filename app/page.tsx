@@ -428,6 +428,18 @@ export default function HomePage() {
     fetchLeads();
   };
 
+  const handleDeleteLead = async (id: number) => {
+    if (!window.confirm(lang === 'es' ? '¿Seguro que deseas eliminar este lead?' : 'Are you sure you want to delete this lead?')) return;
+    const authHeader = await getAuthHeader();
+    const res = await fetch('/api/admin/leads', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) fetchLeads();
+    else alert('Error al eliminar el lead.');
+  };
+
   // --- FUNCIÓN PARA ENVIAR MENSAJE DESDE EL CHAT ---
   const handleSendChatMessage = async () => {
     if (!chatInput.trim()) return;
@@ -1201,6 +1213,7 @@ export default function HomePage() {
                           {lead?.status === 'Nuevo' && (
                             <button onClick={() => updateLeadStatus(lead.id, 'Contactado')} className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 bg-sierra-gold text-black hover:bg-white rounded-xl text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)]">Marcar Contactado</button>
                           )}
+                          <button onClick={() => handleDeleteLead(lead.id)} className="w-full md:w-auto px-4 md:px-6 py-2 md:py-3 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white rounded-xl text-[10px] md:text-xs uppercase tracking-widest font-bold transition-all">Eliminar</button>
                         </div>
                       </div>
                     ))}
