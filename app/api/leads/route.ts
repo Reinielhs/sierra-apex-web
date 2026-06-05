@@ -21,17 +21,42 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-async function notifySlack(text: string) {
-  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
-  if (!webhookUrl) return;
+const MONTHLY_EMAIL_CAP = 2999;
+
+async function getMonthlyLeadCount(): Promise<number> {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  const { count } = await supabase
+    .from('leads')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', startOfMonth.toISOString());
+  return count ?? 0;
+}
+
+async function notifyEmail(subject: string, text: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const monthlyCount = await getMonthlyLeadCount();
+  if (monthlyCount > MONTHLY_EMAIL_CAP) return;
+
   try {
-    await fetch(webhookUrl, {
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Sierra Apex <notificaciones@sierraapexgroup.com>',
+        to: ['reinielhs@gmail.com'],
+        subject,
+        text,
+      }),
     });
   } catch {
-    // Slack notification failure should not block lead submission
+    // Email failure should not block lead submission
   }
 }
 
@@ -51,7 +76,6 @@ export async function POST(request: NextRequest) {
 
   const { name, email, phone, message, car_title, type } = body;
 
-  // Validación básica
   if (type !== 'chat' && !email && !phone) {
     return NextResponse.json({ error: 'Email or phone required' }, { status: 400 });
   }
@@ -70,10 +94,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (type === 'chat') {
-    await notifySlack(`💬 *¡NUEVO MENSAJE EN EL CHAT DE LA WEB!* 💬\n\n*Mensaje:* ${message}`);
+    await notifyEmail(
+      '💬 Nuevo mensaje - Chat Sierra Apex Web',
+      `Nuevo mensaje desde el chat de la web:\n\nMensaje: ${message}`
+    );
   } else {
-    await notifySlack(
-      `🚀 *¡NUEVO LEAD DE VEHÍCULO!* 🚀\n\n*Vehículo:* ${car_title}\n*Cliente:* ${name || 'Anónimo'}\n*Email:* ${email || 'N/A'}\n*Teléfono:* ${phone || 'N/A'}\n*Mensaje:* ${message || 'Sin mensaje adicional.'}`
+    await notifyEmail(
+      `🚀 Nuevo lead - ${car_title}`,
+      `Nuevo lead de vehículo:\n\nVehículo: ${car_title}\nCliente: ${name || 'Anónimo'}\nEmail: ${email || 'N/A'}\nTeléfono: ${phone || 'N/A'}\nMensaje: ${message || 'Sin mensaje adicional.'}`
     );
   }
 
