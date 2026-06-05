@@ -50,7 +50,7 @@ async function notifyEmail(subject: string, text: string) {
       },
       body: JSON.stringify({
         from: 'Sierra Apex <notificaciones@sierraapexgroup.com>',
-        to: ['reinielhs@gmail.com'],
+        to: ['reiniel@sierraapexgroup.com'],
         subject,
         text,
       }),
