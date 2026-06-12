@@ -47,6 +47,7 @@ const translations = {
     voicesTitle: "Voices of Trust",
     shareReviewBtn: "Share my experience",
     // Modal
+    callForPrice: "Contact us for pricing",
     price: "Price",
     mileage: "Mileage",
     engine: "Engine",
@@ -123,6 +124,7 @@ const translations = {
     voicesTitle: "Voces de Confianza",
     shareReviewBtn: "Compartir mi experiencia",
     // Modal
+    callForPrice: "Contáctenos para información de precio",
     price: "Precio",
     mileage: "Millaje",
     engine: "Motor",
@@ -791,7 +793,7 @@ export default function HomePage() {
   const deleteImage = (index: number) => setUploadedImages(prev => prev.filter((_, i) => i !== index));
 
   const handleSaveVehicle = async () => {
-    if (!newCarForm.make || !newCarForm.price) return alert("Completa al menos Marca y Precio de Venta.");
+    if (!newCarForm.make) return alert("Completa al menos la Marca del vehículo.");
     const dbPayload = {
       vin: vinToDecode || null, brand: newCarForm.make, model: newCarForm.model,
       year: Number(newCarForm.year) || new Date().getFullYear(), trim: newCarForm.trim,
@@ -886,7 +888,7 @@ export default function HomePage() {
         <div className="px-1">
           <div className="flex justify-between items-center mb-1">
             <h4 className="text-lg font-bold tracking-tight text-white uppercase group-hover:text-sierra-gold transition-colors">{car?.brand || 'Sin Marca'}</h4>
-            {!isSold && <p className="text-lg font-light text-sierra-gold tracking-tighter">${(car?.price || 0).toLocaleString()}</p>}
+            {!isSold && <p className="text-lg font-light text-sierra-gold tracking-tighter">{car?.price ? `$${car.price.toLocaleString()}` : t.callForPrice}</p>}
           </div>
           <p className="text-sm font-light text-white/80 mb-3">{car?.model || ''} {car?.trim || ''}</p>
           <div className="flex justify-between items-center text-xs text-white/70 uppercase tracking-[0.2em] border-t border-white/10 pt-3">
@@ -1114,7 +1116,7 @@ export default function HomePage() {
                                 <h3 className="text-lg md:text-xl font-bold uppercase tracking-tight">{car?.year || ''} {car?.brand || ''} {car?.model || ''} {car?.trim || ''}</h3>
                                 {car.status === 'Vendido' && <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] md:text-xs px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Vendido</span>}
                               </div>
-                              <span className="text-lg md:text-xl font-light text-sierra-gold">${(car?.price || 0).toLocaleString()}</span>
+                              <span className="text-lg md:text-xl font-light text-sierra-gold">{car?.price ? `$${car.price.toLocaleString()}` : t.callForPrice}</span>
                             </div>
                             <p className="text-[10px] md:text-sm text-white/50 uppercase tracking-widest mb-4">VIN: {car?.vin || 'No Registrado'}</p>
                           </div>
@@ -1272,7 +1274,7 @@ export default function HomePage() {
     if (car.status === 'Vendido') return false;
     const matchBrand = selectedBrand ? car?.brand?.toLowerCase() === selectedBrand : true;
     const matchModel = selectedModel ? car?.model?.toLowerCase() === selectedModel : true;
-    const matchPrice = (car?.price || 0) <= currentPrice;
+    const matchPrice = !car?.price || car.price <= currentPrice;
     return matchBrand && matchModel && matchPrice;
   });
 
@@ -1624,7 +1626,7 @@ export default function HomePage() {
                   <h3 className="text-3xl md:text-4xl font-bold tracking-tighter text-white mb-6 md:mb-8 uppercase leading-none">{selectedCar?.model || ''} {selectedCar?.trim || ''}</h3>
                   
                   <div className="flex justify-between items-end mb-6 md:mb-8">
-                    {selectedCar?.status !== 'Vendido' && <div><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.price}</span><span className="text-3xl md:text-4xl font-bold text-sierra-gold">${(selectedCar?.price || 0).toLocaleString()}</span></div>}
+                    {selectedCar?.status !== 'Vendido' && <div><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.price}</span><span className="text-3xl md:text-4xl font-bold text-sierra-gold">{selectedCar?.price ? `$${selectedCar.price.toLocaleString()}` : t.callForPrice}</span></div>}
                     <div className="text-right"><span className="text-[10px] md:text-xs text-white/50 uppercase font-bold tracking-widest block mb-1 md:mb-2">{t.mileage}</span><span className="text-xl md:text-2xl text-white/90 font-light">{selectedCar?.miles || 0} mi</span></div>
                   </div>
 
