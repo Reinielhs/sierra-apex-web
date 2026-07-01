@@ -1,19 +1,15 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { useState, useRef, Suspense } from 'react'
 
-function getSupabase(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SAM_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SAM_SUPABASE_ANON_KEY
-  if (!url || !key) return null
-  return createClient(url, key)
-}
+const SAM_URL = 'https://pbojyjjdfqbshrwutsph.supabase.co'
+const SAM_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2p5ampkZnFic2hyd3V0c3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjg1MjAsImV4cCI6MjA5NDcwNDUyMH0.LnCxb5_bJasZ35KWGHwy_4n8jmgO2pwuICp8oTyGVqw'
 
 function UploadContent() {
   const searchParams = useSearchParams()
   const session = searchParams.get('session')
-  const supabase = useRef<SupabaseClient | null>(null)
+  const supabase = useRef(createClient(SAM_URL, SAM_KEY))
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(0)
   const [total, setTotal] = useState(0)
@@ -31,14 +27,6 @@ function UploadContent() {
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
-
-    if (!supabase.current) {
-      supabase.current = getSupabase()
-    }
-    if (!supabase.current) {
-      setError('Configuration error. Contact support.')
-      return
-    }
 
     setUploading(true)
     setTotal(files.length)
@@ -84,7 +72,7 @@ function UploadContent() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A1628] gap-10 px-8">
       <div className="flex flex-col items-center gap-1">
-        <div className="text-3xl font-bold text-white tracking-tight">Sierra Apex</div>
+        <div className="text-3xl font-bold text-white tracking-tight">Sierra Apex Group</div>
         <div className="text-xs text-white/30 tracking-widest uppercase">Dealer Manager · Photo Upload</div>
       </div>
 
