@@ -1,16 +1,19 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
-import { useState, Suspense } from 'react'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { useState, useRef, Suspense } from 'react'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SAM_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SAM_SUPABASE_ANON_KEY!
-)
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SAM_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SAM_SUPABASE_ANON_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
+}
 
 function UploadContent() {
   const searchParams = useSearchParams()
   const session = searchParams.get('session')
+  const supabase = useRef<SupabaseClient | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(0)
   const [total, setTotal] = useState(0)
@@ -29,6 +32,14 @@ function UploadContent() {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
 
+    if (!supabase.current) {
+      supabase.current = getSupabase()
+    }
+    if (!supabase.current) {
+      setError('Configuration error. Contact support.')
+      return
+    }
+
     setUploading(true)
     setTotal(files.length)
     setUploaded(0)
@@ -39,7 +50,7 @@ function UploadContent() {
       const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`
       const path = `temp-uploads/${session}/${uid}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.current.storage
         .from('sierra-apex-manager-media')
         .upload(path, file, { contentType: file.type })
 
@@ -91,7 +102,7 @@ function UploadContent() {
             className="hidden"
             onChange={handleFiles}
           />
-          <div className="flex flex-col items-center gap-4 bg-white/8 rounded-3xl px-10 py-10 border border-white/15 active:scale-95 transition-transform select-none">
+          <div className="flex flex-col items-center gap-4 bg-white/5 rounded-3xl px-10 py-10 border border-white/15 active:scale-95 transition-transform select-none">
             <span className="text-5xl">📷</span>
             <p className="text-white text-lg font-semibold text-center">Select Photos</p>
             <p className="text-white/40 text-sm text-center">Tap to choose from your library</p>
