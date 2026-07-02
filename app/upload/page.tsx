@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { useState, useRef, Suspense } from 'react'
 
 const SAM_URL = 'https://pbojyjjdfqbshrwutsph.supabase.co'
-const SAM_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBib2p5ampkZnFic2hyd3V0c3BoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjg1MjAsImV4cCI6MjA5NDcwNDUyMH0.LnCxb5_bJasZ35KWGHwy_4n8jmgO2pwuICp8oTyGVqw'
+const SAM_KEY = 'sb_publishable_ShqOd3zvliAIgHUN1cuQWw_33daO4Es'
 
 function UploadContent() {
   const searchParams = useSearchParams()
