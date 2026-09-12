@@ -705,17 +705,20 @@ export default function HomePage() {
     }
   };
 
+  const MAX_PHOTO_DIMENSION = 1920;
+
   const convertToJpeg = (file: File): Promise<Blob> => new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
+      const scale = Math.min(1, MAX_PHOTO_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
       const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
       const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Conversion failed')), 'image/jpeg', 0.9);
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Conversion failed')), 'image/jpeg', 0.85);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load failed')); };
     img.src = url;
