@@ -249,6 +249,15 @@ export default function HomePage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activePublicImageIndex, setActivePublicImageIndex] = useState(0);
+
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   
   const [searchActive, setSearchActive] = useState(false);
   const [nlQuery, setNlQuery] = useState('');
@@ -1578,17 +1587,18 @@ export default function HomePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-10 bg-[#111C2D]/95 backdrop-blur-md transition-all">
           <div className="absolute inset-0 hidden md:block" onClick={() => setSelectedCar(null)}></div>
           
-          <div className="relative w-full h-[100dvh] md:h-auto max-w-5xl bg-[#162439] md:border border-white/10 md:rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-300">
+          <div className="relative w-full h-[100dvh] md:h-auto md:max-h-[85vh] max-w-6xl bg-[#162439] md:border border-white/10 md:rounded-3xl overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl z-10 animate-in fade-in zoom-in-95 duration-300">
             
             {/* BOTÓN CERRAR - Fijado en móvil para que no se pierda al hacer scroll */}
             <button onClick={() => setSelectedCar(null)} className="fixed md:absolute top-4 right-4 md:top-6 md:right-6 z-[110] text-white/60 hover:text-white transition-colors bg-black/60 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-lg border border-white/10">✕</button>
             
-            <div className="w-full md:w-3/5 h-[45vh] md:h-auto min-h-[300px] relative flex flex-col bg-black group shrink-0">
+            <div className="w-full md:w-2/3 h-[45vh] md:h-auto min-h-[300px] relative flex flex-col bg-black group shrink-0">
               <div className="flex-1 relative w-full h-full">
                 <img 
                   src={selectedCar?.images && selectedCar.images.length > 0 && typeof selectedCar.images !== 'string' ? selectedCar.images[activePublicImageIndex] : getPrimaryImage(selectedCar)} 
                   alt={selectedCar?.brand || 'Auto'} 
-                  className="w-full h-full object-contain bg-[#050B14]" 
+                  className="w-full h-full bg-[#050B14]"
+                  style={{ objectFit: isDesktop ? 'contain' : 'cover' }}
                   onError={(e) => { e.currentTarget.src = NO_PHOTO_SVG; }}
                 />
 
@@ -1619,7 +1629,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="w-full md:w-2/5 p-6 md:p-10 flex flex-col justify-start md:justify-center bg-[#162439] h-auto md:overflow-y-auto flex-1 pb-24 md:pb-10">
+            <div className="w-full md:w-1/3 p-6 md:p-10 flex flex-col justify-start md:justify-center bg-[#162439] h-auto md:overflow-y-auto flex-1 pb-24 md:pb-10">
               {!showLeadForm ? (
                 <div className="animate-in fade-in slide-in-from-right-4 mt-2 md:mt-0">
                   <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-white mb-1 md:mb-2 uppercase leading-none">{selectedCar?.year || ''} {selectedCar?.brand || ''}</h2>
